@@ -5,6 +5,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
 MAIN_FILE = BASE_DIR / "main.py"
+MODULES_DIR = BASE_DIR / "modules"
 
 MODEL_TEMPLATE = """\
 from sqlalchemy import Column, Integer, String, Boolean, DateTime, func
@@ -31,7 +32,7 @@ class {ModelName}Out(CoreSchema[int]):
 """
 
 SERVICE_TEMPLATE = """\
-from {module}.{module}_model import {ModelName}Model
+from modules.{module}.{module}_model import {ModelName}Model
 from core.core_service import CoreService
 
 {module}_service = CoreService({ModelName}Model)
@@ -40,8 +41,8 @@ from core.core_service import CoreService
 CONTROLLER_TEMPLATE = """\
 from core.core_controller import CoreController
 from core.core_service import CoreService
-from {module}.{module}_model import {ModelName}Model
-from {module}.{module}_schema import {ModelName}Create, {ModelName}Update, {ModelName}Out
+from modules.{module}.{module}_model import {ModelName}Model
+from modules.{module}.{module}_schema import {ModelName}Create, {ModelName}Update, {ModelName}Out
 
 {module}_service = CoreService({ModelName}Model)
 
@@ -74,7 +75,6 @@ def index(request: Request):
     return templates.TemplateResponse("index.html", {{"request": request}})
 '''
 
-
 HTML_INDEX = """<!DOCTYPE html>
 <html>
 <head><title>{ModelName} Index</title></head>
@@ -96,9 +96,17 @@ HTML_FORM = """<!DOCTYPE html>
 </html>
 """
 
+def ensure_modules_dir():
+    MODULES_DIR.mkdir(exist_ok=True)
+    init_file = MODULES_DIR / "__init__.py"
+    if not init_file.exists():
+        init_file.write_text("")
+
 def create_module(module_name: str, with_view: bool):
+    ensure_modules_dir()
+
     model_name = module_name.capitalize()
-    module_dir = BASE_DIR / module_name
+    module_dir = MODULES_DIR / module_name
     module_dir.mkdir(exist_ok=True)
 
     # __init__.py cho module
@@ -128,57 +136,60 @@ def create_module(module_name: str, with_view: bool):
         (templates_dir / "form.html").write_text(HTML_FORM.format(ModelName=model_name))
         (static_dir / "style.css").write_text("body { font-family: sans-serif; }")
 
-    # Update main.py
-    with open(MAIN_FILE, "r+") as f:
+    # Update main.py (import + include router)
+    import_lines = []
+    include_lines = []
+
+    import_lines.append(f"from modules.{module_name}.{module_name}_controller import router as {module_name}_router\n")
+    include_lines.append(f"app.include_router({module_name}_router)\n")
+
+    if with_view:
+        import_lines.append(f"from modules.{module_name}.view.controller import router as {module_name}_view_router\n")
+        include_lines.append(f"app.include_router({module_name}_view_router)\n")
+
+    with open(MAIN_FILE, "r+", encoding="utf-8") as f:
         content = f.read()
-        import_line = f"from {module_name}.{module_name}_controller import router as {module_name}_router\n"
-        if with_view:
-            import_line += f"from {module_name}.view.controller import router as {module_name}_view_router\n"
+        imports_to_add = "".join(l for l in import_lines if l not in content)
+        includes_to_add = "".join(l for l in include_lines if l not in content)
 
-        include_line = f"app.include_router({module_name}_router)\n"
-        if with_view:
-            include_line += f"app.include_router({module_name}_view_router)\n"
-
-        if import_line not in content:
-            content = import_line + content
-        if include_line not in content:
-            content += "\n" + include_line
+        # đặt import lên đầu file
+        if imports_to_add:
+            content = imports_to_add + content
+        # thêm include xuống cuối file
+        if includes_to_add:
+            if not content.endswith("\n"):
+                content += "\n"
+            content += "\n" + includes_to_add
 
         f.seek(0)
         f.write(content)
+        f.truncate()
 
 def delete_module(module_name: str):
-    module_dir = BASE_DIR / module_name
+    module_dir = MODULES_DIR / module_name
     if module_dir.exists():
         shutil.rmtree(module_dir)
         print(f"🗑️  Deleted module folder: {module_dir}")
 
     # Xóa import và include trong main.py
     if MAIN_FILE.exists():
-        content = MAIN_FILE.read_text()
+        content = MAIN_FILE.read_text(encoding="utf-8")
 
-        # Các dòng import
         import_lines = [
-            f"from {module_name}.{module_name}_controller import router as {module_name}_router\n",
-            f"from {module_name}.view.controller import router as {module_name}_view_router\n",
+            f"from modules.{module_name}.{module_name}_controller import router as {module_name}_router\n",
+            f"from modules.{module_name}.view.controller import router as {module_name}_view_router\n",
         ]
-        for line in import_lines:
-            content = content.replace(line, "")
-
-        # Các dòng include_router
         include_lines = [
             f"app.include_router({module_name}_router)\n",
             f"app.include_router({module_name}_view_router)\n",
         ]
-        for line in include_lines:
+
+        for line in import_lines + include_lines:
             content = content.replace(line, "")
 
-        MAIN_FILE.write_text(content)
+        MAIN_FILE.write_text(content, encoding="utf-8")
         print(f"🗑️  Removed imports and routers for '{module_name}' from main.py")
 
-# =====================
-# MAIN ENTRY
-# =====================
 if __name__ == "__main__":
     if len(sys.argv) < 3:
         print("Usage:")
@@ -192,9 +203,9 @@ if __name__ == "__main__":
     if action.startswith("-view="):
         with_view = action == "-view=true"
         create_module(module_name, with_view)
-        print(f"✅ Module '{module_name}' created with view={with_view}")
+        print(f"✅ Module '{module_name}' created in 'modules/' with view={with_view}")
     elif action == "delete":
         delete_module(module_name)
-        print(f"✅ Module '{module_name}' deleted")
+        print(f"✅ Module '{module_name}' deleted from 'modules/'")
     else:
         print("❌ Unknown action:", action)
