@@ -1,0 +1,15 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Todo #{{ item.todo_id }}</title>
+  <link rel="stylesheet" href="/todo/static/style.css" />
+</head>
+<body>
+  <a href="/todo/view" class="muted">← Back</a>
+  <h1>{{ item.name }}</h1>
+  <p>{{ item.description }}</p>
+  <p><b>Deadline:</b> {{ item.deadline }}</p>
+  <p><b>Complete:</b> {{ "Yes" if item.complete else "No" }}</p>
+</body>
+</html>

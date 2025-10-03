@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Todo List</title>
+  <link rel="stylesheet" href="/todo/static/style.css" />
+</head>
+<body>
+  <h1>Todos</h1>
+
+  <form method="get" action="/todo/view" class="toolbar">
+    <input name="q" value="{{ q or '' }}" placeholder="Search..." />
+    <button>Search</button>
+    <a class="btn" href="/todo/view/new">+ New</a>
+  </form>
+
+  <ul class="list">
+    {% for t in items %}
+      <li>
+        <a href="/todo/view/{{ t.todo_id }}">{{ t.name }}</a>
+        {% if t.complete %}<small class="badge">done</small>{% endif %}
+        <div class="muted">{{ t.deadline }}</div>
+      </li>
+    {% else %}
+      <li class="muted">No todos</li>
+    {% endfor %}
+  </ul>
+
+  <div class="pager">
+    <a href="/todo/view?page={{ page-1 }}&size={{ size }}" {% if page<=1 %}class="disabled"{% endif %}>Prev</a>
+    <span>Page {{ page }}</span>
+    <a href="/todo/view?page={{ page+1 }}&size={{ size }}">Next</a>
+  </div>
+</body>
+</html>
