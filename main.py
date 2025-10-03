@@ -1,18 +1,17 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from sqlalchemy import text
 from starlette.staticfiles import StaticFiles
-from starlette.templating import Jinja2Templates
 
-from database.db import engine, Base
+from database.db import engine
 
 from pathlib import Path
 
-from todo.todo_controller import router as todos_router
-from auths.auth_controller import router as auth_router
-from user.user_controller import router as user_router
+from modules.todo.todo_controller import router as todos_router
+from modules.auths.auth_controller import router as auth_router
+from modules.user.user_controller import router as user_router
 
-from todo.view.controller import router as todo_view_router
+from modules.todo.view.controller import router as todo_view_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -24,10 +23,6 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print("❌ Database connection failed:", str(e))
         raise e
-
-    # Nếu muốn tạo bảng dev mode
-    # Base.metadata.drop_all(bind=engine)
-    Base.metadata.create_all(bind=engine)
 
     yield   # 👈 chỗ này nhường cho app chạy
 
@@ -43,9 +38,9 @@ app = FastAPI(
 )
 
 
-TODO_VIEW_DIR = Path(__file__).parent / "todo" / "view"
+TODO_VIEW_DIR = Path(__file__).parent / "modules" / "todo" / "view"
 app.mount(
-    "/todo/static",
+    "/modules/todo/static",
     StaticFiles(directory=str(TODO_VIEW_DIR / "static")),
     name="todo_static",
 )

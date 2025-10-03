@@ -29,6 +29,9 @@ class {ModelName}Update(CoreUpdateSchema):
 
 class {ModelName}Out(CoreSchema[int]):
     pass
+    
+    class Config:
+        from_attributes = True
 """
 
 SERVICE_TEMPLATE = """\

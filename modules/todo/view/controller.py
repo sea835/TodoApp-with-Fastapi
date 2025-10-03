@@ -4,7 +4,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from database.db import get_db
-from todo.todo_service import todo_service
+from modules.todo.todo_service import todo_service
 
 router = APIRouter(prefix="/todo/view", tags=["Todo View"])
 

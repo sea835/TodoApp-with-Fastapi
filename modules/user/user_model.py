@@ -1,6 +1,8 @@
 from sqlalchemy import Column, Integer, String
 
 from core.basemodel import BaseModel
+from core.roles import UserRole
+
 
 class UserModel(BaseModel):
     __tablename__ = 'users'
@@ -8,3 +10,4 @@ class UserModel(BaseModel):
     username = Column(String(50), unique=True, index=True, nullable=False)
     password = Column(String(128), nullable=False)
     email = Column(String(100), unique=True, nullable=True)
+    role = Column(String, default=UserRole.USER.value)

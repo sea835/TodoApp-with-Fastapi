@@ -3,7 +3,7 @@ from typing import Union, Any
 from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
-from user.user_model import UserModel
+from modules.user.user_model import UserModel
 
 import jwt
 
@@ -12,12 +12,12 @@ SECRET_KEY = '123456'
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
-def generate_token(username: Union[str, Any]) -> str:
+def generate_token(username: Union[str, Any], role: str) -> str:
     expire = datetime.utcnow() + timedelta(
         seconds=60 * 60 * 24 * 3  # Expired after 3 days
     )
     to_encode = {
-        "exp": expire, "username": username
+        "exp": expire, "username": username, "role": role
     }
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=SECURITY_ALGORITHM)
     return encoded_jwt

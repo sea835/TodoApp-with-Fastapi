@@ -1,8 +1,7 @@
 # user/user_controller.py
 from core.core_controller import CoreController
-from user.user_service import user_service
-from user.user_schema import UserCreate, UserUpdate, UserOut
-from user.user_model import UserModel
+from modules.user.user_service import user_service
+from modules.user.user_schema import UserCreate, UserUpdate, UserOut
 
 user_controller = CoreController(
     service=user_service,

@@ -1,7 +1,7 @@
 from core.core_controller import CoreController
 from core.core_service import CoreService
-from todo.todo_model import TodoModel
-from todo.todo_schema import TodoCreate, TodoUpdate, TodoOut
+from modules.todo.todo_model import TodoModel
+from modules.todo.todo_schema import TodoCreate, TodoUpdate, TodoOut
 
 todo_service = CoreService(TodoModel)
 

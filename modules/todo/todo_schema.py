@@ -20,3 +20,6 @@ class TodoOut(CoreSchema[int]):
     description: str
     complete: bool = False
     deadline: dt.datetime
+
+    class Config:
+        from_attributes = True
